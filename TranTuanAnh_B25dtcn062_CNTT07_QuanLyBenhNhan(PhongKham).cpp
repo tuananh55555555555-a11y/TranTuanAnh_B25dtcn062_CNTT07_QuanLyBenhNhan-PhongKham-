@@ -9,903 +9,743 @@
 #define CLEAR_SCREEN "clear"
 #endif
 
-#define MAX_PATIENTS 100
-#define MAX_RECORDS 500
-#define MAX_RECORDS_PER_PATIENT 20
-#define PAGE_SIZE 5
+#define MAX_BENHNHAN 100
+#define MAX_KHAM_MOT_BENHNHAN 20
 
-long long globalRecordId = 1000;
+long long idLichSuToanCuc = 1000;
 
 typedef struct {
-    char recId[20]; 
-    char cardId[10]; 
-    char date[20];   
-    char status[20]; 
-} Record;
+    char maLichSu[20];
+    char maBenhNhan[10];
+    char ngayKham[20];
+    char trangThai[20];
+} LichSu;
 
 typedef struct {
-    char cardId[10];
-    char name[50];
-    char phone[15];
-    double debt;
-    int visitDays;
-    Record records[MAX_RECORDS_PER_PATIENT];
-    int recordCount;
-} Patient;
+    char maBenhNhan[10];
+    char ten[50];
+    char sdt[15];
+    double no;
+    int soNgayKham;
+    LichSu cacLichSu[MAX_KHAM_MOT_BENHNHAN];
+    int soLichSu;
+} BenhNhan;
 
-Patient patientList[MAX_PATIENTS];
-int patientCount = 0; 
+BenhNhan dsBenhNhan[MAX_BENHNHAN];
+int soBenhNhan = 0;
 
-void clearInputBuffer() {
+void xoaBoDemNhap() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) { }
 }
 
-void clearScreen() {
+void xoaManHinh() {
     system(CLEAR_SCREEN);
 }
 
-void waitForEnter() {
+void choNhanEnter() {
     printf("\nNhan ENTER de tiep tuc...");
     while (getchar() != '\n');
 }
 
-void toLowerCase(char *str) {
+void vietThuong(char *str) {
     for (int i = 0; str[i]; i++) {
         str[i] = tolower((unsigned char)str[i]);
     }
 }
 
-void removeNewline(char *str) {
+void xoaXuongDong(char *str) {
     str[strcspn(str, "\n")] = 0;
 }
 
-int isValidPhone(const char *phone) {
-    if (strlen(phone) != 9) return 0; 
-    for (int i = 0; phone[i] != '\0'; i++) {
-        if (!isdigit((unsigned char)phone[i])) return 0;
+int soDienThoaiHopLe(const char *sdt) {
+    if (strlen(sdt) != 9) return 0;
+    for (int i = 0; sdt[i] != '\0'; i++) {
+        if (!isdigit((unsigned char)sdt[i])) return 0;
     }
     return 1;
 }
 
-int isValidName(const char *name) {
-    for (int i = 0; name[i] != '\0'; i++) {
-        if (!isalpha((unsigned char)name[i]) && !isspace((unsigned char)name[i])) {
-            return 0; 
+int tenHopLe(const char *ten) {
+    for (int i = 0; ten[i] != '\0'; i++) {
+        if (!isalpha((unsigned char)ten[i]) && !isspace((unsigned char)ten[i])) {
+            return 0;
         }
     }
-    return 1; 
+    return 1;
 }
 
-int isAllDigits(const char *str) {
+int tatCaLaSo(const char *str) {
     if (strlen(str) == 0) return 0;
     for (int i = 0; str[i] != '\0'; i++) {
         if (!isdigit((unsigned char)str[i])) {
-            return 0; 
+            return 0;
         }
     }
     return 1;
 }
 
-int isValidDate(const char *date) {
-    int day, month, year;
-
-    if (strlen(date) != 10) return 0;
-
-    if (date[2] != '/' || date[5] != '/') return 0;
-
-    if (!isdigit(date[0]) || !isdigit(date[1]) ||
-        !isdigit(date[3]) || !isdigit(date[4]) ||
-        !isdigit(date[6]) || !isdigit(date[7]) || !isdigit(date[8]) || !isdigit(date[9])) 
+int ngayHopLe(const char *ngay) {
+    int d, m, y;
+    if (strlen(ngay) != 10) return 0;
+    if (ngay[2] != '/' || ngay[5] != '/') return 0;
+    if (!isdigit(ngay[0]) || !isdigit(ngay[1]) ||
+        !isdigit(ngay[3]) || !isdigit(ngay[4]) ||
+        !isdigit(ngay[6]) || !isdigit(ngay[7]) || !isdigit(ngay[8]) || !isdigit(ngay[9]))
         return 0;
-
-    day = (date[0] - '0') * 10 + (date[1] - '0');
-    month = (date[3] - '0') * 10 + (date[4] - '0');
-    year = (date[6] - '0') * 1000 + (date[7] - '0') * 100 + (date[8] - '0') * 10 + (date[9] - '0');
-
-    if (month < 1 || month > 12) return 0;
-    if (day < 1 || day > 31) return 0;
-
-    if (month == 2) {
-        int isLeap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-        if (day > 29 || (day == 29 && !isLeap)) return 0;
+    d = (ngay[0] - '0') * 10 + (ngay[1] - '0');
+    m = (ngay[3] - '0') * 10 + (ngay[4] - '0');
+    y = (ngay[6] - '0') * 1000 + (ngay[7] - '0') * 100 + (ngay[8] - '0') * 10 + (ngay[9] - '0');
+    if (m < 1 || m > 12) return 0;
+    if (d < 1 || d > 31) return 0;
+    if (m == 2) {
+        int namNhuan = (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
+        if (d > 29 || (d == 29 && !namNhuan)) return 0;
     }
-
-    if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30) return 0;
-
+    if ((m == 4 || m == 6 || m == 9 || m == 11) && d > 30) return 0;
     return 1;
 }
 
-int findPatientIndex(const char *cardId) {
-    for (int i = 0; i < patientCount; i++) {
-        if (strcmp(patientList[i].cardId, cardId) == 0) {
+int timBenhNhanBangMa(const char *maBenhNhan) {
+    for (int i = 0; i < soBenhNhan; i++) {
+        if (strcmp(dsBenhNhan[i].maBenhNhan, maBenhNhan) == 0) {
             return i;
         }
     }
     return -1;
 }
 
-void ThemBenhNhanMoi() {
-    clearScreen();
-    char cardId[10], name[50], phone[15], debtStr[20];
-    double debt;
-    int is_valid = 0;
-
-    if (patientCount >= MAX_PATIENTS) {
-        printf("\n[LOI] Danh sach da day. Khong the them benh nhan moi.\n");
-        waitForEnter();
-        return;
-    }
-
-    printf("\n--- TIEP NHAN BENH NHAN MOI ---\n");
-
-    do {
-        is_valid = 1;
-        printf("1. Nhap CCCD (cardId - chi nhap so): ");
-        if (fgets(cardId, sizeof(cardId), stdin) == NULL) return;
-        removeNewline(cardId);
-        
-        if (strlen(cardId) == 0) {
-            printf("[LOI] CCCD khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (!isAllDigits(cardId)) {
-            printf("[LOI] CCCD chi duoc chua chu so. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (findPatientIndex(cardId) != -1) {
-            printf("[LOI] cardId bi trung. Vui long nhap ma khac.\n");
-            is_valid = 0;
-        }
-    } while (!is_valid);
-
-    do {
-        is_valid = 1;
-        printf("2. Nhap Ten benh nhan (name): ");
-        if (fgets(name, sizeof(name), stdin) == NULL) return;
-        removeNewline(name);
-        
-        if (!isValidName(name)) { 
-            printf("[LOI] Ten benh nhan khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } 
-    } while (!is_valid);
-
-    do {
-        is_valid = 1;
-        printf("3. Nhap So dien thoai (phone - 9 chu so): ");
-        if (fgets(phone, sizeof(phone), stdin) == NULL) return;
-        removeNewline(phone);
-        
-        if (strlen(phone) == 0) {
-            printf("[LOI] So dien thoai khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (!isValidPhone(phone)) {
-            printf("[LOI] So dien thoai khong hop le (Phai la 9 chu so va khong chua chu cai/dau).\n");
-            is_valid = 0;
-        }
-    } while (!is_valid);
-
-    do {
-        is_valid = 1;
-        printf("4. Nhap Cong no ban dau (debt): ");
-        if (fgets(debtStr, sizeof(debtStr), stdin) == NULL) return;
-        removeNewline(debtStr);
-        debt = atof(debtStr);
-        
-        if (strlen(debtStr) == 0) {
-            printf("[LOI] Cong no khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (debt < 0) {
-            printf("[LOI] Cong no phai la so duong hoac bang 0 (debt >= 0).\n");
-            is_valid = 0;
-        }
-    } while (!is_valid);
-
-    Patient newPatient;
-    strcpy(newPatient.cardId, cardId);
-    strcpy(newPatient.name, name);
-    strcpy(newPatient.phone, phone);
-    newPatient.debt = debt;
-    newPatient.visitDays = 0;
-    newPatient.recordCount = 0;
-
-    printf("\n[Xac nhan] Hoan tat nhap lieu.\n");
-    
-    patientList[patientCount++] = newPatient;
-    printf("[THANH CONG] Tiep nhan benh nhan %s (Ma: %s) thanh cong.\n", name, cardId);
-    
+void hienThiThongTinBenhNhan(BenhNhan *bn) {
+    printf("\n+---------+----------------------+----------+--------+-----+\n");
+    printf("| %-7s | %-20s | %-8s | %-6s | %-3s |\n",
+        "Ma", "Ten", "SDT", "No", "KB");
+    printf("+---------+----------------------+----------+--------+-----+\n");
+    printf("| %-7s | %-20s | %-8s | %-6.0f | %-3d |\n",
+        bn->maBenhNhan, bn->ten, bn->sdt, bn->no, bn->soNgayKham);
+    printf("+---------+----------------------+----------+--------+-----+\n");
 }
 
-void CapNhatThongTinBenhNhan() {
-    clearScreen();
-    char cardId[10], newName[50], newPhone[15], newDebtStr[20];
-    double newDebt;
-    int index, is_valid = 0;
-
-    if (patientCount == 0) {
-        printf("\n[LOI] Danh sach benh nhan hien dang trong. Khong the cap nhat.\n");
-        waitForEnter();
+// Hi?n th? danh sách t?ng b?nh nhân không dùng b?ng (theo yêu c?u)
+void hienThiDSBenhNhan() {
+    xoaManHinh();
+    if (soBenhNhan == 0) {
+        printf("Danh sach rong.\n");
+        choNhanEnter();
         return;
     }
 
-    printf("\n--- CAP NHAT THONG TIN BENH NHAN ---\n");
-    
+    printf("\nDANH SACH CAC BENH NHAN:\n");
+    for (int i = 0; i < soBenhNhan; i++) {
+        printf("- So %d\n", i+1);
+        printf("  Ma: %s\n", dsBenhNhan[i].maBenhNhan);
+        printf("  Ten: %s\n", dsBenhNhan[i].ten);
+        printf("  SDT: %s\n", dsBenhNhan[i].sdt);
+        printf("  No: %.0f VND\n", dsBenhNhan[i].no);
+        printf("  So lan kham: %d\n", dsBenhNhan[i].soNgayKham);
+        printf("------------------------------\n");
+    }
+    choNhanEnter();
+}
+
+void themBenhNhanMoi() {
+    xoaManHinh();
+    char ma[10], ten[50], sdt[15], noStr[20];
+    double no;
+    int hopLe = 0;
+
+    if (soBenhNhan >= MAX_BENHNHAN) {
+        printf("\nDanh sach day roi. Khong them duoc nua.\n");
+        choNhanEnter();
+        return;
+    }
+
+    printf("--- THEM BENH NHAN MOI ---\n");
+
     do {
-        is_valid = 1;
-        printf("Nhap CCCD (cardId - chi nhap so): ");
-        if (fgets(cardId, sizeof(cardId), stdin) == NULL) return;
-        removeNewline(cardId);
-        
-        if (strlen(cardId) == 0) {
-            printf("[LOI] CCCD khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (!isAllDigits(cardId)) {
-            printf("[LOI] CCCD chi duoc chua chu so. Vui long nhap lai.\n");
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap ma benh nhan (chi nhap so): ");
+        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
+        xoaXuongDong(ma);
+
+        if (strlen(ma) == 0) {
+            printf("Khong duoc de trong. Nhap lai.\n");
+            hopLe = 0;
+        } else if (!tatCaLaSo(ma)) {
+            printf("Chi nhap so thoi nha. Nhap lai.\n");
+            hopLe = 0;
+        } else if (timBenhNhanBangMa(ma) != -1) {
+            printf("Ma bi trung. Nhap ma khac.\n");
+            hopLe = 0;
+        }
+    } while (!hopLe);
+
+    do {
+        hopLe = 1;
+        printf("Nhap ten benh nhan: ");
+        if (fgets(ten, sizeof(ten), stdin) == NULL) return;
+        xoaXuongDong(ten);
+        if (!tenHopLe(ten)) {
+            printf("Ten khong hop le hoac de trong. Nhap lai.\n");
+            hopLe = 0;
+        }
+    } while (!hopLe);
+
+    do {
+        hopLe = 1;
+        printf("Nhap SDT (9 so): ");
+        if (fgets(sdt, sizeof(sdt), stdin) == NULL) return;
+        xoaXuongDong(sdt);
+        if (strlen(sdt) == 0) {
+            printf("SDT khong duoc de trong. Nhap lai.\n");
+            hopLe = 0;
+        } else if (!soDienThoaiHopLe(sdt)) {
+            printf("SDT phai la 9 so. Nhap lai.\n");
+            hopLe = 0;
+        }
+    } while (!hopLe);
+
+    do {
+        hopLe = 1;
+        printf("Nhap cong no ban dau: ");
+        if (fgets(noStr, sizeof(noStr), stdin) == NULL) return;
+        xoaXuongDong(noStr);
+        no = atof(noStr);
+
+        if (strlen(noStr) == 0) {
+            printf("Cong no khong duoc de trong. Nhap lai.\n");
+            hopLe = 0;
+        } else if (no < 0) {
+            printf("Nhap so duong hoac 0 nha.\n");
+            hopLe = 0;
+        }
+    } while (!hopLe);
+
+    BenhNhan moi;
+    strcpy(moi.maBenhNhan, ma);
+    strcpy(moi.ten, ten);
+    strcpy(moi.sdt, sdt);
+    moi.no = no;
+    moi.soNgayKham = 0;
+    moi.soLichSu = 0;
+
+    dsBenhNhan[soBenhNhan++] = moi;
+
+    printf("Them thanh cong ban %s (Ma: %s) roi nhe!\n", ten, ma);
+    hienThiThongTinBenhNhan(&dsBenhNhan[soBenhNhan-1]);
+    choNhanEnter();
+}
+
+void capNhatBenhNhan() {
+    xoaManHinh();
+    char ma[10], tenMoi[50], sdtMoi[15], noMoiStr[20];
+    double noMoi;
+    int index, hopLe = 0;
+
+    if (soBenhNhan == 0) {
+        printf("Chua co benh nhan nao. Khong cap nhat duoc.\n");
+        choNhanEnter();
+        return;
+    }
+
+    printf("--- CAP NHAT BENH NHAN ---\n");
+    do {
+        hopLe = 1;
+        printf("Nhap ma benh nhan: ");
+        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
+        xoaXuongDong(ma);
+
+        if (strlen(ma) == 0) {
+            printf("Khong duoc de trong. Nhap lai.\n");
+            hopLe = 0;
+        } else if (!tatCaLaSo(ma)) {
+            printf("Chi nhap so nha. Nhap lai.\n");
+            hopLe = 0;
         } else {
-            index = findPatientIndex(cardId);
+            index = timBenhNhanBangMa(ma);
             if (index == -1) {
-                printf("[LOI] Khong tim thay benh nhan co Ma ho so %s.\n", cardId);
-                is_valid = 0;
+                printf("Khong tim thay ma %s.\n", ma);
+                hopLe = 0;
             }
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
-    index = findPatientIndex(cardId);
-
-    printf("\n--- CAP NHAT THONG TIN CHO BENH NHAN %s ---\n", patientList[index].name);
+    printf("Cap nhat thong tin cho %s:\n", dsBenhNhan[index].ten);
 
     do {
-        is_valid = 1;
-        printf("1. Nhap Ten moi (Hien tai: %s): ", patientList[index].name);
-        if (fgets(newName, sizeof(newName), stdin) == NULL) return;
-        removeNewline(newName);
-        
-        if (strlen(newName) == 0) {
-            printf("[LOI] Ten benh nhan khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (!isValidName(newName)) {
-            printf("[LOI] Ten chi duoc chua ky tu chu cai va khoang trang (khong dau, khong so).\n");
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap ten moi (Dang la: %s): ", dsBenhNhan[index].ten);
+        if (fgets(tenMoi, sizeof(tenMoi), stdin) == NULL) return;
+        xoaXuongDong(tenMoi);
+        if (strlen(tenMoi) == 0 || !tenHopLe(tenMoi)) {
+            printf("Ten khong hop le. Nhap lai.\n");
+            hopLe = 0;
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
     do {
-        is_valid = 1;
-        printf("2. Nhap So dien thoai moi (Hien tai: %s | 9 chu so): ", patientList[index].phone);
-        if (fgets(newPhone, sizeof(newPhone), stdin) == NULL) return;
-        removeNewline(newPhone);
-        
-        if (strlen(newPhone) == 0) {
-            printf("[LOI] So dien thoai khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (!isValidPhone(newPhone)) {
-            printf("[LOI] So dien thoai khong hop le (Phai la 9 chu so va khong chua chu cai/dau).\n");
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap so dien thoai moi (Dang la: %s, 9 so): ", dsBenhNhan[index].sdt);
+        if (fgets(sdtMoi, sizeof(sdtMoi), stdin) == NULL) return;
+        xoaXuongDong(sdtMoi);
+        if (strlen(sdtMoi) == 0 || !soDienThoaiHopLe(sdtMoi)) {
+            printf("SDT khong hop le. Nhap lai.\n");
+            hopLe = 0;
         }
-    } while (!is_valid);
-    
+    } while (!hopLe);
+
     do {
-        is_valid = 1;
-        printf("3. Nhap Cong no moi (Hien tai: %.0f): ", patientList[index].debt);
-        if (fgets(newDebtStr, sizeof(newDebtStr), stdin) == NULL) return;
-        removeNewline(newDebtStr);
-        newDebt = atof(newDebtStr);
-        
-        if (strlen(newDebtStr) == 0) {
-            printf("[LOI] Cong no khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (newDebt < 0) {
-            printf("[LOI] Cong no khong duoc la so am.\n");
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap cong no moi (Dang la: %.0f): ", dsBenhNhan[index].no);
+        if (fgets(noMoiStr, sizeof(noMoiStr), stdin) == NULL) return;
+        xoaXuongDong(noMoiStr);
+        noMoi = atof(noMoiStr);
+        if (strlen(noMoiStr) == 0 || noMoi < 0) {
+            printf("Nhap so duong hoac 0 nha.\n");
+            hopLe = 0;
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
-    strcpy(patientList[index].name, newName);
-    strcpy(patientList[index].phone, newPhone);
-    patientList[index].debt = newDebt;
+    strcpy(dsBenhNhan[index].ten, tenMoi);
+    strcpy(dsBenhNhan[index].sdt, sdtMoi);
+    dsBenhNhan[index].no = noMoi;
 
-    printf("\n[THANH CONG] Cap nhat thong tin cho benh nhan %s (Ma: %s) thanh cong.\n", newName, cardId);
-    
+    printf("Da cap nhat xong, thong tin moi nhu sau:\n");
+    hienThiThongTinBenhNhan(&dsBenhNhan[index]);
+    choNhanEnter();
 }
 
-void XuatVien() {
-    clearScreen();
-    char cardId[10], confirm[5];
-    int is_valid = 0;
+void xuatBenhNhan() {
+    xoaManHinh();
+    char ma[10], xacNhan[5];
+    int hopLe = 0;
 
-    if (patientCount == 0) {
-        printf("\n[LOI] Danh sach benh nhan hien dang trong. Khong the xuat vien.\n");
-        waitForEnter();
+    if (soBenhNhan == 0) {
+        printf("Chua co benh nhan nao de xuat vien.\n");
+        choNhanEnter();
         return;
     }
 
-    printf("\n--- XUAT VIEN ---\n");
-    
+    printf("--- XUAT VIEN ---\n");
     do {
-        is_valid = 1;
-        printf("Nhap CCCD (cardId - chi nhap so): ");
-        if (fgets(cardId, sizeof(cardId), stdin) == NULL) return;
-        removeNewline(cardId);
-
-        if (strlen(cardId) == 0) {
-            printf("[LOI] CCCD khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (!isAllDigits(cardId)) {
-            printf("[LOI] CCCD chi duoc chua chu so. Vui long nhap lai.\n");
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap ma benh nhan: ");
+        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
+        xoaXuongDong(ma);
+        if (strlen(ma) == 0 || !tatCaLaSo(ma)) {
+            printf("Nhap lai ma nha.\n");
+            hopLe = 0;
         } else {
-            int index_check = findPatientIndex(cardId);
-            if (index_check == -1) {
-                printf("[LOI] Khong tim thay benh nhan co Ma ho so %s.\n", cardId);
-                is_valid = 0;
+            int kiemtra = timBenhNhanBangMa(ma);
+            if (kiemtra == -1) {
+                printf("Khong tim thay ma %s.\n", ma);
+                hopLe = 0;
             }
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
-    int index = findPatientIndex(cardId);
+    int index = timBenhNhanBangMa(ma);
 
-    if (patientList[index].debt > 0) {
-        char paymentStr[20];
-        double paidAmount = 0.0;
-        double currentDebt = patientList[index].debt;
+    if (dsBenhNhan[index].no > 0) {
+        char traTienStr[20];
+        double daTra = 0.0;
+        double noHienTai = dsBenhNhan[index].no;
+        printf("Ban %s con no: %.0f VND.\n", dsBenhNhan[index].ten, noHienTai);
 
-        printf("\n[CONG NO] Benh nhan %s (Ma: %s) con cong no: %.0f VND.\n", 
-               patientList[index].name, cardId, currentDebt);
-        
         do {
-            is_valid = 1;
-            printf("Nhap so tien thanh toan (0 - %.0f): ", currentDebt);
-            if (fgets(paymentStr, sizeof(paymentStr), stdin) == NULL) return;
-            removeNewline(paymentStr);
-            
-            if (strlen(paymentStr) == 0) {
-                printf("[LOI] So tien thanh toan khong duoc de trong. Vui long nhap lai.\n");
-                is_valid = 0;
+            hopLe = 1;
+            printf("Nhap so tien muon tra (0 - %.0f): ", noHienTai);
+            if (fgets(traTienStr, sizeof(traTienStr), stdin) == NULL) return;
+            xoaXuongDong(traTienStr);
+            if (strlen(traTienStr) == 0) {
+                printf("Khong duoc de trong. Nhap lai.\n");
+                hopLe = 0;
             } else {
-                paidAmount = atof(paymentStr);
-                if (paidAmount < 0) {
-                    printf("[LOI] So tien thanh toan khong duoc la so am. Vui long nhap lai.\n");
-                    is_valid = 0;
+                daTra = atof(traTienStr);
+                if (daTra < 0) {
+                    printf("Nhap so duong thoi. Nhap lai.\n");
+                    hopLe = 0;
                 }
             }
-        } while (!is_valid);
-        
-        patientList[index].debt -= paidAmount;
-        if (patientList[index].debt < 0) {
-            patientList[index].debt = 0; 
+        } while (!hopLe);
+
+        dsBenhNhan[index].no -= daTra;
+        if (dsBenhNhan[index].no < 0) {
+            dsBenhNhan[index].no = 0;
         }
 
-        printf("[CAP NHAT] Cong no sau thanh toan: %.0f VND.\n", patientList[index].debt);
+        printf("Con no: %.0f VND.\n", dsBenhNhan[index].no);
     }
-    
-    if (patientList[index].debt > 0) {
-        printf("\n[CANH BAO] Benh nhan van con cong no: %.0f VND.\n", patientList[index].debt);
+
+    if (dsBenhNhan[index].no > 0) {
+        printf("Con no %.0f VND nhe.\n", dsBenhNhan[index].no);
         do {
-            is_valid = 1;
-            printf("Ban co chac chan muon xuat vien du con no? (Y/N): ");
-            if (fgets(confirm, sizeof(confirm), stdin) == NULL) return;
-            removeNewline(confirm);
-            toLowerCase(confirm);
-            if (strcmp(confirm, "y") != 0 && strcmp(confirm, "n") != 0) {
-                printf("[LOI] Lua chon khong hop le. Vui long nhap 'Y' hoac 'N'.\n");
-                is_valid = 0;
-            } else if (strcmp(confirm, "n") == 0) {
-                printf("[HUY BO] Da huy yeu cau xuat vien.\n");
-                waitForEnter();
+            hopLe = 1;
+            printf("Co muon xuat vien khi con no khong? (Y/N): ");
+            if (fgets(xacNhan, sizeof(xacNhan), stdin) == NULL) return;
+            xoaXuongDong(xacNhan);
+            vietThuong(xacNhan);
+            if (strcmp(xacNhan, "y") != 0 && strcmp(xacNhan, "n") != 0) {
+                printf("Nhap Y hoac N thoi.\n");
+                hopLe = 0;
+            } else if (strcmp(xacNhan, "n") == 0) {
+                printf("Huy xuat vien.\n");
+                choNhanEnter();
                 return;
             }
-        } while (!is_valid);
+        } while (!hopLe);
     } else {
-        printf("\n[XUAT VIEN] Benh nhan da hoan thanh cong no.\n");
+        printf("Benh nhan da tra het no.\n");
     }
 
-    for (int i = index; i < patientCount - 1; i++) {
-        patientList[i] = patientList[i + 1];
-    }
-    patientCount--;
+    printf("--> Benh nhan da xuat vien:\n");
+    hienThiThongTinBenhNhan(&dsBenhNhan[index]);
 
-    printf("[THANH CONG] Benh nhan %s (Ma: %s) da xuat vien thanh cong.\n", cardId, cardId);
-    waitForEnter();
-    
+    for (int i = index; i < soBenhNhan - 1; i++) {
+        dsBenhNhan[i] = dsBenhNhan[i + 1];
+    }
+    soBenhNhan--;
+
+    choNhanEnter();
 }
 
-void HienThiDanhSachBenhNhan() {
-    if (patientCount == 0) {
-        clearScreen();
-        printf("\n[THONG BAO] Danh sach benh nhan hien dang trong.\n");
-        waitForEnter();
+void timKiemBenhNhanBangTen() {
+    xoaManHinh();
+    char tuTim[50], tuTimThuong[50];
+    int timThay = 0, hopLe = 0;
+
+    if (soBenhNhan == 0) {
+        printf("Khong co benh nhan nao de tim.\n");
+        choNhanEnter();
         return;
     }
 
-    int totalPages = (patientCount + PAGE_SIZE - 1) / PAGE_SIZE;
-    int currentPage = 1;
-    char input[10];
-
+    printf("--- TIM KIEM BENH NHAN ---\n");
     do {
-        clearScreen();
-        
-        if (currentPage < 1) currentPage = 1;
-        if (currentPage > totalPages) currentPage = totalPages;
-
-        int startIndex = (currentPage - 1) * PAGE_SIZE;
-        int endIndex = startIndex + PAGE_SIZE;
-        if (endIndex > patientCount) {
-            endIndex = patientCount;
+        hopLe = 1;
+        printf("Nhap ten can tim: ");
+        if (fgets(tuTim, sizeof(tuTim), stdin) == NULL) return;
+        xoaXuongDong(tuTim);
+        if (strlen(tuTim) == 0) {
+            printf("Khong duoc de trong. Nhap lai.\n");
+            hopLe = 0;
         }
+    } while (!hopLe);
 
-        printf("\n+=======================================================================+\n");
-        printf("|                   DANH SACH BENH NHAN (Trang %d/%d)                     |\n", currentPage, totalPages);
-        printf("+----------+------------------------------+------------+----------+-----+\n");
-        printf("| %-8s | %-28s | %-10s | %-8s | %-3s |\n",
-               "Ma HS", "Ten Benh Nhan", "SDT", "Cong No", "KB");
-        printf("+----------+------------------------------+------------+----------+-----+\n");
+    strcpy(tuTimThuong, tuTim);
+    vietThuong(tuTimThuong);
 
-        for (int i = startIndex; i < endIndex; i++) {
-            printf("| %-8s | %-28s | %-10s | %-8.0f | %-3d |\n",
-                   patientList[i].cardId, patientList[i].name, patientList[i].phone, 
-                   patientList[i].debt, patientList[i].visitDays);
-        }
-        printf("+----------+------------------------------+------------+----------+-----+\n");
+    xoaManHinh();
+    printf("+==========================================================+\n");
+    printf("| Ket qua tim kiem                                         |\n");
+    printf("+---------+----------------------+----------+--------+-----+\n");
+    printf("| %-7s | %-20s | %-8s | %-6s | %-3s |\n",
+           "Ma", "Ten", "SDT", "No", "KB");
+    printf("+---------+----------------------+----------+--------+-----+\n");
 
-        printf("Chon thao tac:\n");
-        printf("  [T] Truoc - Nhap so trang (1-%d)\n", totalPages);
-        printf("  [S] Sau\n");
-        printf("  [X] Thoat\n");
-        printf("Nhap lua chon: ");
-
-
-        if (fgets(input, sizeof(input), stdin) == NULL) continue;
-        removeNewline(input);
-
-        if (strcasecmp(input, "X") == 0) {
-            break;
-        } else if (strcasecmp(input, "S") == 0) {
-            if (currentPage < totalPages) {
-                currentPage++;
-            } else {
-                printf("[THONG BAO] Ban dang o trang cuoi.\n");
-                waitForEnter();
-            }
-        } else if (strcasecmp(input, "T") == 0) {
-            if (currentPage > 1) {
-                currentPage--;
-            } else {
-                printf("[THONG BAO] Ban dang o trang dau.\n");
-                waitForEnter();
-            }
-        } else {
-            int newPage = atoi(input);
-            if (newPage > 0 && newPage <= totalPages) {
-                
-                if (newPage == currentPage && newPage == 1) {
-                    printf("[THONG BAO] Ban da o trang dau tien (trang 1).\n");
-                    waitForEnter();
-                } else if (newPage == currentPage && newPage == totalPages) {
-                    printf("[THONG BAO] Ban da o trang cuoi cung (trang %d).\n", totalPages);
-                    waitForEnter();
-                } else {
-                    currentPage = newPage;
-                }
-            } else {
-                printf("[LOI] So trang khong hop le. Nhan ENTER de tiep tuc.");
-                clearInputBuffer();
-            }
-        }
-        
-        if (strcasecmp(input, "S") != 0 && strcasecmp(input, "T") != 0 && atoi(input) == 0) {
-            clearInputBuffer();
-        }
-
-    } while (1);
-    clearScreen();
-}
-
-void TimKiemBenhNhan() {
-    clearScreen();
-    char searchStr[50], lowerSearchStr[50];
-    int foundCount = 0;
-    int is_valid = 0;
-
-    if (patientCount == 0) {
-        printf("\n[LOI] Danh sach benh nhan hien dang trong. Khong the tim kiem.\n");
-        waitForEnter();
-        return;
-    }
-
-    printf("\n--- TIM KIEM BENH NHAN ---\n");
-    
-    do {
-        is_valid = 1;
-        printf("Nhap chuoi tim kiem (mot phan ten benh nhan): ");
-        if (fgets(searchStr, sizeof(searchStr), stdin) == NULL) return;
-        removeNewline(searchStr);
-
-        if (strlen(searchStr) == 0) {
-            printf("[LOI] Chuoi tim kiem khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        }
-    } while (!is_valid);
-
-
-    strcpy(lowerSearchStr, searchStr);
-    toLowerCase(lowerSearchStr);
-
-    clearScreen();
-    printf("\n+======================================================================+\n");
-    printf("|                         KET QUA TIM KIEM                             |\n");
-    printf("+----------+------------------------------+------------+----------+-----+\n");
-    printf("| %-8s | %-28s | %-10s | %-8s | %-3s |\n",
-           "Ma HS", "Ten Benh Nhan", "SDT", "Cong No", "KB");
-    printf("+----------+------------------------------+------------+----------+-----+\n");
-
-    for (int i = 0; i < patientCount; i++) {
-        char lowerName[50];
-        strcpy(lowerName, patientList[i].name);
-        toLowerCase(lowerName);
-
-        if (strstr(lowerName, lowerSearchStr) != NULL) {
-            printf("| %-8s | %-28s | %-10s | %-8.0f | %-3d |\n",
-                   patientList[i].cardId, patientList[i].name, patientList[i].phone, 
-                   patientList[i].debt, patientList[i].visitDays);
-            foundCount++;
+    for (int i = 0; i < soBenhNhan; i++) {
+        char tenThuong[50];
+        strcpy(tenThuong, dsBenhNhan[i].ten);
+        vietThuong(tenThuong);
+        if (strstr(tenThuong, tuTimThuong) != NULL) {
+            printf("| %-7s | %-20s | %-8s | %-6.0f | %-3d |\n",
+                   dsBenhNhan[i].maBenhNhan, dsBenhNhan[i].ten, dsBenhNhan[i].sdt,
+                   dsBenhNhan[i].no, dsBenhNhan[i].soNgayKham);
+            timThay++;
         }
     }
-    printf("+----------+------------------------------+------------+----------+-----+\n");
-
-    if (foundCount == 0) {
-        printf("Khong tim thay benh nhan nao chua chuoi \"%s\".\n", searchStr);
+    printf("+---------+----------------------+----------+--------+-----+\n");
+    if (timThay == 0) {
+        printf("Khong co ai ten \"%s\".\n", tuTim);
     } else {
-        printf("Tim thay %d benh nhan.\n", foundCount);
+        printf("Tim thay %d benh nhan.\n", timThay);
     }
-    waitForEnter();
+    choNhanEnter();
 }
 
-void SapXepTheoCongNo() {
-    clearScreen();
-    char choiceStr[5];
-    int choice;
-    int is_valid = 0;
+void sapXepTheoNo() {
+    xoaManHinh();
+    char kieuStr[5];
+    int kieu, hopLe = 0;
 
-    if (patientCount == 0) {
-        printf("\n[LOI] Danh sach benh nhan hien dang trong. Khong the sap xep.\n");
-        waitForEnter();
+    if (soBenhNhan == 0) {
+        printf("Khong co du lieu de sap xep.\n");
+        choNhanEnter();
         return;
     }
 
-    printf("\n--- SAP XEP DANH SACH BENH NHAN THEO CONG NO ---\n");
-    
+    printf("--- SAP XEP THEO NO ---\n");
     do {
-        is_valid = 1;
-        printf("Lua chon kieu sap xep:\n");
-        printf("1. Sap tang dan (Cong no thap nhat len truoc)\n");
-        printf("2. Sap giam dan (Cong no cao nhat len truoc)\n");
-        printf("Nhap lua chon (1 hoac 2): ");
-
-        if (fgets(choiceStr, sizeof(choiceStr), stdin) == NULL) return;
-        removeNewline(choiceStr);
-        choice = atoi(choiceStr);
-
-        if (strlen(choiceStr) == 0 || (choice != 1 && choice != 2)) {
-            printf("[LOI] Lua chon khong hop le. Vui long nhap 1 hoac 2.\n");
-            is_valid = 0;
+        hopLe = 1;
+        printf("Chon kieu:\n1. Tang dan (no thap nhat truoc)\n2. Giam dan (no cao nhat truoc)\nNhap 1 hoac 2: ");
+        if (fgets(kieuStr, sizeof(kieuStr), stdin) == NULL) return;
+        xoaXuongDong(kieuStr);
+        kieu = atoi(kieuStr);
+        if (strlen(kieuStr) == 0 || (kieu != 1 && kieu != 2)) {
+            printf("Nhap 1 hoac 2 thoi.\n");
+            hopLe = 0;
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
-
-    for (int i = 0; i < patientCount - 1; i++) {
-        for (int j = 0; j < patientCount - 1 - i; j++) {
-            int swap = 0;
-            if (choice == 1) {
-                if (patientList[j].debt > patientList[j + 1].debt) {
-                    swap = 1;
-                }
+    for (int i = 0; i < soBenhNhan - 1; i++) {
+        for (int j = 0; j < soBenhNhan - 1 - i; j++) {
+            int doi = 0;
+            if (kieu == 1) {
+                if (dsBenhNhan[j].no > dsBenhNhan[j + 1].no)
+                    doi = 1;
             } else {
-                if (patientList[j].debt < patientList[j + 1].debt) {
-                    swap = 1;
-                }
+                if (dsBenhNhan[j].no < dsBenhNhan[j + 1].no)
+                    doi = 1;
             }
-
-            if (swap) {
-                Patient temp = patientList[j];
-                patientList[j] = patientList[j + 1];
-                patientList[j + 1] = temp;
+            if (doi) {
+                BenhNhan tmp = dsBenhNhan[j];
+                dsBenhNhan[j] = dsBenhNhan[j + 1];
+                dsBenhNhan[j + 1] = tmp;
             }
         }
     }
 
-    printf("\n[THANH CONG] Danh sach da duoc sap xep %s theo Cong no.\n", 
-           (choice == 1) ? "TANG DAN" : "GIAM DAN");
-    printf("Vui long chon Hien thi danh sach de xem ket qua.\n");
-    waitForEnter();
-    
+    printf("Da sap xep danh sach theo no xong.\nChon \"hien thi danh sach\" de xem ket qua.\n");
+    choNhanEnter();
 }
 
-void GhiNhanKhamBenh() {
-    clearScreen();
-    char cardId[10], date[20]; 
-    int is_valid = 0;
-
-    if (patientCount == 0) {
-        printf("\n[LOI] Danh sach benh nhan hien dang trong. Khong the ghi nhan kham benh.\n");
-        waitForEnter();
+void ghiNhanKhamBenh() {
+    xoaManHinh();
+    char ma[10], ngayKham[20];
+    int hopLe = 0;
+    if (soBenhNhan == 0) {
+        printf("Khong co ai de ghi nhan.\n");
+        choNhanEnter();
         return;
     }
-
-    printf("\n--- GHI NHAN KHAM BENH ---\n");
-    
+    printf("--- GHI NHAN KHAM BENH ---\n");
     do {
-        is_valid = 1;
-        printf("Nhap Ma benh nhan can ghi nhan kham benh: ");
-        if (fgets(cardId, sizeof(cardId), stdin) == NULL) return;
-        removeNewline(cardId);
-        
-        if (strlen(cardId) == 0) {
-            printf("[LOI] Ma benh nhan khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (findPatientIndex(cardId) == -1) {
-            printf("[LOI] Khong tim thay benh nhan co ma %s.\n", cardId);
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap ma benh nhan: ");
+        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
+        xoaXuongDong(ma);
+        if (strlen(ma) == 0 || timBenhNhanBangMa(ma) == -1) {
+            printf("Nhap lai ma nhe.\n");
+            hopLe = 0;
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
-    int index = findPatientIndex(cardId);
-    
+    int index = timBenhNhanBangMa(ma);
+
     do {
-        is_valid = 1;
-        printf("Nhap Ngay kham benh (dd/mm/YYYY, VD: 01/12/2025): ");
-        if (fgets(date, sizeof(date), stdin) == NULL) return;
-        removeNewline(date);
-        
-        if (strlen(date) == 0) {
-            printf("[LOI] Ngay kham benh khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (!isValidDate(date)) { 
-            printf("[LOI] Ngay kham benh khong dung dinh dang hoac khong hop le (dd/mm/YYYY). Vui long nhap lai.\n");
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap ngay kham (dd/mm/YYYY): ");
+        if (fgets(ngayKham, sizeof(ngayKham), stdin) == NULL) return;
+        xoaXuongDong(ngayKham);
+        if (strlen(ngayKham) == 0 || !ngayHopLe(ngayKham)) {
+            printf("Nhap dung dinh dang dd/mm/YYYY nhe.\n");
+            hopLe = 0;
         } else {
-            for (int i = 0; i < patientList[index].recordCount; i++) {
-                if (strcmp(patientList[index].records[i].date, date) == 0) {
-                    printf("[THONG BAO] Benh nhan %s da duoc ghi nhan kham vao ngay %s roi.\n", cardId, date);
-                    waitForEnter();
+            for (int i = 0; i < dsBenhNhan[index].soLichSu; i++) {
+                if (strcmp(dsBenhNhan[index].cacLichSu[i].ngayKham, ngayKham) == 0) {
+                    printf("Da ghi lich kham ngay %s roi.\n", ngayKham);
+                    choNhanEnter();
                     return;
                 }
             }
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
-    if (patientList[index].recordCount >= MAX_RECORDS_PER_PATIENT) {
-        printf("[LOI] Ho so kham benh cua benh nhan nay da day (%d/%d).\n", 
-               MAX_RECORDS_PER_PATIENT, MAX_RECORDS_PER_PATIENT);
-        waitForEnter();
+    if (dsBenhNhan[index].soLichSu >= MAX_KHAM_MOT_BENHNHAN) {
+        printf("Da ghi du %d lan roi.\n", MAX_KHAM_MOT_BENHNHAN);
+        choNhanEnter();
         return;
     }
 
-    patientList[index].visitDays++;
+    dsBenhNhan[index].soNgayKham++;
 
-    Record newRec;
-    
-    sprintf(newRec.recId, "REC%lld", globalRecordId++);
-    strcpy(newRec.cardId, cardId); 
-    strcpy(newRec.date, date);
-    strcpy(newRec.status, "Theo doi");
+    LichSu lsMoi;
+    sprintf(lsMoi.maLichSu, "LS%lld", idLichSuToanCuc++);
+    strcpy(lsMoi.maBenhNhan, ma);
+    strcpy(lsMoi.ngayKham, ngayKham);
+    strcpy(lsMoi.trangThai, "Theo doi");
 
-    patientList[index].records[patientList[index].recordCount++] = newRec;
+    dsBenhNhan[index].cacLichSu[dsBenhNhan[index].soLichSu++] = lsMoi;
 
-    printf("\n[THANH CONG] Ghi nhan lich kham ngay %s (Ma giao dich: %s) cho benh nhan %s thanh cong.\n", date, newRec.recId, cardId);
-    printf("So ngay kham benh hien tai: %d\n", patientList[index].visitDays);
-    waitForEnter();
-    
+    printf("\nLich su moi vua ghi nhan cho benh nhan:\n");
+    printf("+-----------+------------+-----------+\n");
+    printf("| %-9s | %-10s | %-9s |\n", "MaLS", "NgayKham", "TrangThai");
+    printf("+-----------+------------+-----------+\n");
+    printf("| %-9s | %-10s | %-9s |\n",
+        lsMoi.maLichSu, lsMoi.ngayKham, lsMoi.trangThai);
+    printf("+-----------+------------+-----------+\n");
+    hienThiThongTinBenhNhan(&dsBenhNhan[index]);
+    choNhanEnter();
 }
 
-void XemLichSuKhamBenh() {
-    clearScreen();
-    char cardId[10];
-    int is_valid = 0;
+void xemLichSuKhamBenh() {
+    xoaManHinh();
+    char ma[10];
+    int hopLe = 0;
 
-    if (patientCount == 0) {
-        printf("\n[LOI] Danh sach benh nhan hien dang trong. Khong the xem lich su.\n");
-        waitForEnter();
+    if (soBenhNhan == 0) {
+        printf("Khong co ai de xem lich su.\n");
+        choNhanEnter();
         return;
     }
-
-    printf("\n--- XEM LICH SU KHAM BENH ---\n");
-    
+    printf("--- XEM LICH SU KHAM BENH ---\n");
     do {
-        is_valid = 1;
-        printf("Nhap Ma benh nhan can xem lich kham: ");
-        if (fgets(cardId, sizeof(cardId), stdin) == NULL) return;
-        removeNewline(cardId);
-        
-        if (strlen(cardId) == 0) {
-            printf("[LOI] Ma benh nhan khong duoc de trong. Vui long nhap lai.\n");
-            is_valid = 0;
-        } else if (findPatientIndex(cardId) == -1) {
-            printf("[LOI] Khong tim thay benh nhan co ma %s.\n", cardId);
-            is_valid = 0;
+        hopLe = 1;
+        printf("Nhap ma benh nhan: ");
+        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
+        xoaXuongDong(ma);
+        if (strlen(ma) == 0 || timBenhNhanBangMa(ma) == -1) {
+            printf("Nhap lai ma nhe.\n");
+            hopLe = 0;
         }
-    } while (!is_valid);
+    } while (!hopLe);
 
-    int index = findPatientIndex(cardId);
+    int index = timBenhNhanBangMa(ma);
 
-    clearScreen();
-    printf("\n+==================================================================+\n");
-    printf("| LICH SU KHAM BENH CUA BENH NHAN: %s (Ma: %s)         |\n", patientList[index].name, cardId);
-    printf("+============+---------------+--------------------+----------------+\n");
-    
-    if (patientList[index].recordCount == 0) {
-        printf("[THONG BAO] Benh nhan nay chua co lich su kham benh nao duoc ghi nhan.\n");
+    xoaManHinh();
+    printf("\n+------------------------------------------------+\n");
+    printf("| Lich su kham cua %-20s (Ma: %s) |\n", dsBenhNhan[index].ten, ma);
+
+    if (dsBenhNhan[index].soLichSu == 0) {
+        printf("| %-46s |\n", "Chua co lich su kham nao.");
+        printf("+------------------------------------------------+\n");
     } else {
-        printf("| %-10s | %-13s | %-18s | %-14s |\n", "Ma GD", "Ngay kham", "Trang thai", "Ghi chu");
-        printf("+============+---------------+--------------------+----------------+\n");
-        for (int i = 0; i < patientList[index].recordCount; i++) {
-            printf("| %-10s | %-13s | %-18s | %-14s |\n", 
-                   patientList[index].records[i].recId,
-                   patientList[index].records[i].date, 
-                   patientList[index].records[i].status,
-                   ""); 
+        printf("+-----------+------------+-----------+\n");
+        printf("| %-9s | %-10s | %-9s |\n", "MaLS", "NgayKham", "TrangThai");
+        printf("+-----------+------------+-----------+\n");
+        for (int i = 0; i < dsBenhNhan[index].soLichSu; i++) {
+            printf("| %-9s | %-10s | %-9s |\n",
+                   dsBenhNhan[index].cacLichSu[i].maLichSu, dsBenhNhan[index].cacLichSu[i].ngayKham,
+                   dsBenhNhan[index].cacLichSu[i].trangThai);
         }
-        printf("+============+---------------+--------------------+----------------+\n");
-        printf("Tong so lan kham benh: %d\n", patientList[index].recordCount);
+        printf("+-----------+------------+-----------+\n");
+        printf("| Tong so lan kham: %-24d         |\n", dsBenhNhan[index].soLichSu);
+        printf("+------------------------------------------------+\n");
     }
-    waitForEnter();
-    
+    hienThiThongTinBenhNhan(&dsBenhNhan[index]);
+    choNhanEnter();
 }
 
-void initializePatients() {
-    patientCount = 7;
-    
-    strcpy(patientList[0].cardId, "001");
-    strcpy(patientList[0].name, "Nguyen Van An"); 
-    strcpy(patientList[0].phone, "123456789"); 
-    patientList[0].debt = 8500000;
-    patientList[0].visitDays = 8;
-    patientList[0].recordCount = 2;
-    
-    sprintf(patientList[0].records[0].recId, "REC%lld", globalRecordId++);
-    strcpy(patientList[0].records[0].cardId, "001");
-    strcpy(patientList[0].records[0].date, "01/11/2025");
-    strcpy(patientList[0].records[0].status, "Tai kham");
-    
-    sprintf(patientList[0].records[1].recId, "REC%lld", globalRecordId++);
-    strcpy(patientList[0].records[1].cardId, "001");
-    strcpy(patientList[0].records[1].date, "05/11/2025");
-    strcpy(patientList[0].records[1].status, "Theo doi");
+void khoiTaoDuLieu() {
+    soBenhNhan = 7;
+    strcpy(dsBenhNhan[0].maBenhNhan, "001");
+    strcpy(dsBenhNhan[0].ten, "Nguyen Van An");
+    strcpy(dsBenhNhan[0].sdt, "123456789");
+    dsBenhNhan[0].no = 8500000;
+    dsBenhNhan[0].soNgayKham = 8;
+    dsBenhNhan[0].soLichSu = 2;
+    sprintf(dsBenhNhan[0].cacLichSu[0].maLichSu, "LS%lld", idLichSuToanCuc++);
+    strcpy(dsBenhNhan[0].cacLichSu[0].maBenhNhan, "001");
+    strcpy(dsBenhNhan[0].cacLichSu[0].ngayKham, "01/11/2025");
+    strcpy(dsBenhNhan[0].cacLichSu[0].trangThai, "Tai kham");
+    sprintf(dsBenhNhan[0].cacLichSu[1].maLichSu, "LS%lld", idLichSuToanCuc++);
+    strcpy(dsBenhNhan[0].cacLichSu[1].maBenhNhan, "001");
+    strcpy(dsBenhNhan[0].cacLichSu[1].ngayKham, "05/11/2025");
+    strcpy(dsBenhNhan[0].cacLichSu[1].trangThai, "Theo doi");
 
-    strcpy(patientList[1].cardId, "002");
-    strcpy(patientList[1].name, "Tran Thi Binh"); 
-    strcpy(patientList[1].phone, "987654321");
-    patientList[1].debt = 300000;
-    patientList[1].visitDays = 2;
-    patientList[1].recordCount = 1;
-    
-    sprintf(patientList[1].records[0].recId, "REC%lld", globalRecordId++);
-    strcpy(patientList[1].records[0].cardId, "002");
-    strcpy(patientList[1].records[0].date, "10/11/2025");
-    strcpy(patientList[1].records[0].status, "Tai kham"); 
+    strcpy(dsBenhNhan[1].maBenhNhan, "002");
+    strcpy(dsBenhNhan[1].ten, "Tran Thi Binh");
+    strcpy(dsBenhNhan[1].sdt, "987654321");
+    dsBenhNhan[1].no = 300000;
+    dsBenhNhan[1].soNgayKham = 2;
+    dsBenhNhan[1].soLichSu = 1;
+    sprintf(dsBenhNhan[1].cacLichSu[0].maLichSu, "LS%lld", idLichSuToanCuc++);
+    strcpy(dsBenhNhan[1].cacLichSu[0].maBenhNhan, "002");
+    strcpy(dsBenhNhan[1].cacLichSu[0].ngayKham, "10/11/2025");
+    strcpy(dsBenhNhan[1].cacLichSu[0].trangThai, "Tai kham");
 
-    strcpy(patientList[2].cardId, "003");
-    strcpy(patientList[2].name, "Le Van Cuong"); 
-    strcpy(patientList[2].phone, "147852369");
-    patientList[2].debt = 2500000;
-    patientList[2].visitDays = 12;
-    patientList[2].recordCount = 0;
+    strcpy(dsBenhNhan[2].maBenhNhan, "003");
+    strcpy(dsBenhNhan[2].ten, "Le Van Cuong");
+    strcpy(dsBenhNhan[2].sdt, "147852369");
+    dsBenhNhan[2].no = 2500000;
+    dsBenhNhan[2].soNgayKham = 12;
+    dsBenhNhan[2].soLichSu = 0;
 
-    strcpy(patientList[3].cardId, "004");
-    strcpy(patientList[3].name, "Nguyen Thi Dung"); 
-    strcpy(patientList[3].phone, "333444555");
-    patientList[3].debt = 100000;
-    patientList[3].visitDays = 1;
-    patientList[3].recordCount = 0;
+    strcpy(dsBenhNhan[3].maBenhNhan, "004");
+    strcpy(dsBenhNhan[3].ten, "Nguyen Thi Dung");
+    strcpy(dsBenhNhan[3].sdt, "333444555");
+    dsBenhNhan[3].no = 100000;
+    dsBenhNhan[3].soNgayKham = 1;
+    dsBenhNhan[3].soLichSu = 0;
 
-    strcpy(patientList[4].cardId, "005");
-    strcpy(patientList[4].name, "Pham Van Hung"); 
-    strcpy(patientList[4].phone, "912345678");
-    patientList[4].debt = 1200000;
-    patientList[4].visitDays = 5;
-    patientList[4].recordCount = 0;
-    
-    strcpy(patientList[5].cardId, "006");
-    strcpy(patientList[5].name, "Hoang Van Khoa"); 
-    strcpy(patientList[5].phone, "888777666");
-    patientList[5].debt = 750000;
-    patientList[5].visitDays = 3;
-    patientList[5].recordCount = 0;
+    strcpy(dsBenhNhan[4].maBenhNhan, "005");
+    strcpy(dsBenhNhan[4].ten, "Pham Van Hung");
+    strcpy(dsBenhNhan[4].sdt, "912345678");
+    dsBenhNhan[4].no = 1200000;
+    dsBenhNhan[4].soNgayKham = 5;
+    dsBenhNhan[4].soLichSu = 0;
 
-    strcpy(patientList[6].cardId, "007");
-    strcpy(patientList[6].name, "Vuong Thi Mai"); 
-    strcpy(patientList[6].phone, "999888777");
-    patientList[6].debt = 4000000;
-    patientList[6].visitDays = 10;
-    patientList[6].recordCount = 0;
+    strcpy(dsBenhNhan[5].maBenhNhan, "006");
+    strcpy(dsBenhNhan[5].ten, "Hoang Van Khoa");
+    strcpy(dsBenhNhan[5].sdt, "888777666");
+    dsBenhNhan[5].no = 750000;
+    dsBenhNhan[5].soNgayKham = 3;
+    dsBenhNhan[5].soLichSu = 0;
+
+    strcpy(dsBenhNhan[6].maBenhNhan, "007");
+    strcpy(dsBenhNhan[6].ten, "Vuong Thi Mai");
+    strcpy(dsBenhNhan[6].sdt, "999888777");
+    dsBenhNhan[6].no = 4000000;
+    dsBenhNhan[6].soNgayKham = 10;
+    dsBenhNhan[6].soLichSu = 0;
 }
 
-void showMenu() {
-    clearScreen();
-    
-    printf("\n\n+====================================================+\n");
-    printf("|          HE THONG QUAN LY BENH NHAN                |\n");
-    printf("+====================================================+\n");
-    
-    printf("| So luong benh nhan hien tai: %3d/%3d               |\n", patientCount, MAX_PATIENTS);
-    
-    printf("+-------+--------------------------------------------+\n");
-    
-    printf("| %-5s | %-42s |\n", "STT", "CHUC NANG");
-    printf("+-------+--------------------------------------------+\n");
-    
-    printf("| %-5d | %-42s |\n", 1, "Tiep nhan benh nhan moi");
-    printf("| %-5d | %-42s |\n", 2, "Cap nhat thong tin benh nhan");
-    printf("| %-5d | %-42s |\n", 3, "Xuat vien ");
-    printf("| %-5d | %-42s |\n", 4, "Hien thi danh sach");
-    printf("| %-5d | %-42s |\n", 5, "Tim kiem benh nhan theo Ten");
-    printf("| %-5d | %-42s |\n", 6, "Sap xep danh sach benh nhan theo Cong no");
-    printf("| %-5d | %-42s |\n", 7, "Ghi nhan kham benh");
-    printf("| %-5d | %-42s |\n", 8, "Xem lich su kham benh");
-    
-    printf("+-------+--------------------------------------------+\n");
-    
-    printf("| %-5d | %-42s |\n", 0, "Thoat chuong trinh");
-    printf("+====================================================+\n");
-    printf("Vui long nhap lua chon cua ban: ");
+void hienMenu() {
+    xoaManHinh();
+    printf("\n+===============================================+\n");
+    printf("|   CHAO BAN DEN HE THONG QUAN LY BENH NHAN     |\n");
+    printf("+===============================================+\n");
+    printf("| So luong benh nhan: %d/%d                     |\n", soBenhNhan, MAX_BENHNHAN);
+    printf("+-----+-----------------------------------------+\n");
+    printf("| STT | CHUC NANG                               |\n");
+    printf("+-----+-----------------------------------------+\n");
+    printf("| 1   | Them benh nhan moi                      |\n");
+    printf("| 2   | Cap nhat benh nhan                      |\n");
+    printf("| 3   | Xuat vien                               |\n");
+    printf("| 4   | Hien thi danh sach                      |\n");
+    printf("| 5   | Tim kiem benh nhan theo ten             |\n");
+    printf("| 6   | Sap xep benh nhan theo no               |\n");
+    printf("| 7   | Ghi nhan kham benh                      |\n");
+    printf("| 8   | Xem lich su kham benh                   |\n");
+    printf("+-----+-----------------------------------------+\n");
+    printf("| 0   | Thoat chuong trinh                      |\n");
+    printf("+===============================================+\n");
+    printf("Nhap so chuc nang ban muon chon: ");
 }
 
 int main() {
-    initializePatients(); 
-    
-    char choiceStr[5];
-    int choice;
-    int input_success;
-
+    khoiTaoDuLieu();
+    char luaChon[5];
+    int chon;
     do {
-        showMenu(); 
-        
-        if (fgets(choiceStr, sizeof(choiceStr), stdin) == NULL) {
-            choice = -1; 
+        hienMenu();
+        if (fgets(luaChon, sizeof(luaChon), stdin) == NULL) {
+            chon = -1;
         } else {
-            removeNewline(choiceStr);
-            if (sscanf(choiceStr, "%d", &choice) != 1) {
-                choice = -1; 
+            xoaXuongDong(luaChon);
+            if (sscanf(luaChon, "%d", &chon) != 1) {
+                chon = -1;
             }
         }
-
-        switch (choice) {
-            case 1:
-                ThemBenhNhanMoi();
-                break;
-            case 2:
-                CapNhatThongTinBenhNhan();
-                break;
-            case 3:
-                XuatVien();
-                break;
-            case 4:
-                HienThiDanhSachBenhNhan();
-                break;
-            case 5:
-                TimKiemBenhNhan();
-                break;
-            case 6:
-                SapXepTheoCongNo();
-                break;
-            case 7:
-                GhiNhanKhamBenh();
-                break;
-            case 8:
-                XemLichSuKhamBenh();
-                break;
+        switch (chon) {
+            case 1: themBenhNhanMoi(); break;
+            case 2: capNhatBenhNhan(); break;
+            case 3: xuatBenhNhan(); break;
+            case 4: hienThiDSBenhNhan(); break;
+            case 5: timKiemBenhNhanBangTen(); break;
+            case 6: sapXepTheoNo(); break;
+            case 7: ghiNhanKhamBenh(); break;
+            case 8: xemLichSuKhamBenh(); break;
             case 0:
-                clearScreen();
-                printf("\nDa thoat chuong trinh. Tam biet!\n");
+                xoaManHinh();
+                printf("Cam on ban da su dung chuong trinh. Hen gap lai!\n");
                 break;
             default:
-                if (choice != 0) { 
-                    printf("\n[LOI] Lua chon khong hop le. Vui long thu lai.\n");
-                    waitForEnter();
+                if (chon != 0) {
+                    printf("Nhap sai, thu lai nha!\n");
+                    choNhanEnter();
                 }
                 break;
         }
-
-    } while (choice != 0);
-
+    } while (chon != 0);
     return 0;
 }
