@@ -16,13 +16,13 @@ long long idLichSuToanCuc = 1000;
 
 typedef struct {
     char maLichSu[20];
-    char maBenhNhan[10];
+    char CCCD[15];
     char ngayKham[20];
     char trangThai[20];
 } LichSu;
 
 typedef struct {
-    char maBenhNhan[10];
+    char CCCD[15];
     char ten[50];
     char sdt[15];
     double no;
@@ -106,9 +106,9 @@ int ngayHopLe(const char *ngay) {
     return 1;
 }
 
-int timBenhNhanBangMa(const char *maBenhNhan) {
+int timBenhNhanBangCCCD(const char *CCCD) {
     for (int i = 0; i < soBenhNhan; i++) {
-        if (strcmp(dsBenhNhan[i].maBenhNhan, maBenhNhan) == 0) {
+        if (strcmp(dsBenhNhan[i].CCCD, CCCD) == 0) {
             return i;
         }
     }
@@ -116,16 +116,15 @@ int timBenhNhanBangMa(const char *maBenhNhan) {
 }
 
 void hienThiThongTinBenhNhan(BenhNhan *bn) {
-    printf("\n+---------+----------------------+----------+--------+-----+\n");
-    printf("| %-7s | %-20s | %-8s | %-6s | %-3s |\n",
-        "Ma", "Ten", "SDT", "No", "KB");
-    printf("+---------+----------------------+----------+--------+-----+\n");
-    printf("| %-7s | %-20s | %-8s | %-6.0f | %-3d |\n",
-        bn->maBenhNhan, bn->ten, bn->sdt, bn->no, bn->soNgayKham);
-    printf("+---------+----------------------+----------+--------+-----+\n");
+    printf("\n+-------------+----------------------+----------+--------+-----+\n");
+    printf("| %-11s | %-20s | %-8s | %-6s | %-3s |\n",
+        "CCCD", "Ten", "SDT", "No", "KB");
+    printf("+-------------+----------------------+----------+--------+-----+\n");
+    printf("| %-11s | %-20s | %-8s | %-6.0f | %-3d |\n",
+        bn->CCCD, bn->ten, bn->sdt, bn->no, bn->soNgayKham);
+    printf("+-------------+----------------------+----------+--------+-----+\n");
 }
 
-// Hi?n th? danh sách t?ng b?nh nhân không dùng b?ng (theo yêu c?u)
 void hienThiDSBenhNhan() {
     xoaManHinh();
     if (soBenhNhan == 0) {
@@ -137,7 +136,7 @@ void hienThiDSBenhNhan() {
     printf("\nDANH SACH CAC BENH NHAN:\n");
     for (int i = 0; i < soBenhNhan; i++) {
         printf("- So %d\n", i+1);
-        printf("  Ma: %s\n", dsBenhNhan[i].maBenhNhan);
+        printf("  CCCD: %s\n", dsBenhNhan[i].CCCD);
         printf("  Ten: %s\n", dsBenhNhan[i].ten);
         printf("  SDT: %s\n", dsBenhNhan[i].sdt);
         printf("  No: %.0f VND\n", dsBenhNhan[i].no);
@@ -149,7 +148,7 @@ void hienThiDSBenhNhan() {
 
 void themBenhNhanMoi() {
     xoaManHinh();
-    char ma[10], ten[50], sdt[15], noStr[20];
+    char CCCD[15], ten[50], sdt[15], noStr[20];
     double no;
     int hopLe = 0;
 
@@ -163,18 +162,18 @@ void themBenhNhanMoi() {
 
     do {
         hopLe = 1;
-        printf("Nhap ma benh nhan (chi nhap so): ");
-        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
-        xoaXuongDong(ma);
+        printf("Nhap CCCD benh nhan (12 so): ");
+        if (fgets(CCCD, sizeof(CCCD), stdin) == NULL) return;
+        xoaXuongDong(CCCD);
 
-        if (strlen(ma) == 0) {
+        if (strlen(CCCD) == 0) {
             printf("Khong duoc de trong. Nhap lai.\n");
             hopLe = 0;
-        } else if (!tatCaLaSo(ma)) {
-            printf("Chi nhap so thoi nha. Nhap lai.\n");
+        } else if (!tatCaLaSo(CCCD) || strlen(CCCD) != 12) {
+            printf("CCCD phai la 12 so. Nhap lai.\n");
             hopLe = 0;
-        } else if (timBenhNhanBangMa(ma) != -1) {
-            printf("Ma bi trung. Nhap ma khac.\n");
+        } else if (timBenhNhanBangCCCD(CCCD) != -1) {
+            printf("CCCD bi trung. Nhap CCCD khac.\n");
             hopLe = 0;
         }
     } while (!hopLe);
@@ -221,7 +220,7 @@ void themBenhNhanMoi() {
     } while (!hopLe);
 
     BenhNhan moi;
-    strcpy(moi.maBenhNhan, ma);
+    strcpy(moi.CCCD, CCCD);
     strcpy(moi.ten, ten);
     strcpy(moi.sdt, sdt);
     moi.no = no;
@@ -230,14 +229,14 @@ void themBenhNhanMoi() {
 
     dsBenhNhan[soBenhNhan++] = moi;
 
-    printf("Them thanh cong ban %s (Ma: %s) roi nhe!\n", ten, ma);
+    printf("Them thanh cong ban %s (CCCD: %s) roi nhe!\n", ten, CCCD);
     hienThiThongTinBenhNhan(&dsBenhNhan[soBenhNhan-1]);
     choNhanEnter();
 }
 
 void capNhatBenhNhan() {
     xoaManHinh();
-    char ma[10], tenMoi[50], sdtMoi[15], noMoiStr[20];
+    char CCCD[15], tenMoi[50], sdtMoi[15], noMoiStr[20];
     double noMoi;
     int index, hopLe = 0;
 
@@ -250,20 +249,20 @@ void capNhatBenhNhan() {
     printf("--- CAP NHAT BENH NHAN ---\n");
     do {
         hopLe = 1;
-        printf("Nhap ma benh nhan: ");
-        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
-        xoaXuongDong(ma);
+        printf("Nhap CCCD benh nhan: ");
+        if (fgets(CCCD, sizeof(CCCD), stdin) == NULL) return;
+        xoaXuongDong(CCCD);
 
-        if (strlen(ma) == 0) {
+        if (strlen(CCCD) == 0) {
             printf("Khong duoc de trong. Nhap lai.\n");
             hopLe = 0;
-        } else if (!tatCaLaSo(ma)) {
-            printf("Chi nhap so nha. Nhap lai.\n");
+        } else if (!tatCaLaSo(CCCD) || strlen(CCCD) != 12) {
+            printf("CCCD phai la 12 so. Nhap lai.\n");
             hopLe = 0;
         } else {
-            index = timBenhNhanBangMa(ma);
+            index = timBenhNhanBangCCCD(CCCD);
             if (index == -1) {
-                printf("Khong tim thay ma %s.\n", ma);
+                printf("Khong tim thay CCCD %s.\n", CCCD);
                 hopLe = 0;
             }
         }
@@ -316,7 +315,7 @@ void capNhatBenhNhan() {
 
 void xuatBenhNhan() {
     xoaManHinh();
-    char ma[10], xacNhan[5];
+    char CCCD[15], xacNhan[5];
     int hopLe = 0;
 
     if (soBenhNhan == 0) {
@@ -328,22 +327,22 @@ void xuatBenhNhan() {
     printf("--- XUAT VIEN ---\n");
     do {
         hopLe = 1;
-        printf("Nhap ma benh nhan: ");
-        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
-        xoaXuongDong(ma);
-        if (strlen(ma) == 0 || !tatCaLaSo(ma)) {
-            printf("Nhap lai ma nha.\n");
+        printf("Nhap CCCD benh nhan: ");
+        if (fgets(CCCD, sizeof(CCCD), stdin) == NULL) return;
+        xoaXuongDong(CCCD);
+        if (strlen(CCCD) == 0 || !tatCaLaSo(CCCD) || strlen(CCCD) != 12) {
+            printf("Nhap lai CCCD nha.\n");
             hopLe = 0;
         } else {
-            int kiemtra = timBenhNhanBangMa(ma);
+            int kiemtra = timBenhNhanBangCCCD(CCCD);
             if (kiemtra == -1) {
-                printf("Khong tim thay ma %s.\n", ma);
+                printf("Khong tim thay CCCD %s.\n", CCCD);
                 hopLe = 0;
             }
         }
     } while (!hopLe);
 
-    int index = timBenhNhanBangMa(ma);
+    int index = timBenhNhanBangCCCD(CCCD);
 
     if (dsBenhNhan[index].no > 0) {
         char traTienStr[20];
@@ -437,23 +436,23 @@ void timKiemBenhNhanBangTen() {
     xoaManHinh();
     printf("+==========================================================+\n");
     printf("| Ket qua tim kiem                                         |\n");
-    printf("+---------+----------------------+----------+--------+-----+\n");
-    printf("| %-7s | %-20s | %-8s | %-6s | %-3s |\n",
-           "Ma", "Ten", "SDT", "No", "KB");
-    printf("+---------+----------------------+----------+--------+-----+\n");
+    printf("+-------------+----------------------+----------+--------+-----+\n");
+    printf("| %-11s | %-20s | %-8s | %-6s | %-3s |\n",
+           "CCCD", "Ten", "SDT", "No", "KB");
+    printf("+-------------+----------------------+----------+--------+-----+\n");
 
     for (int i = 0; i < soBenhNhan; i++) {
         char tenThuong[50];
         strcpy(tenThuong, dsBenhNhan[i].ten);
         vietThuong(tenThuong);
         if (strstr(tenThuong, tuTimThuong) != NULL) {
-            printf("| %-7s | %-20s | %-8s | %-6.0f | %-3d |\n",
-                   dsBenhNhan[i].maBenhNhan, dsBenhNhan[i].ten, dsBenhNhan[i].sdt,
+            printf("| %-11s | %-20s | %-8s | %-6.0f | %-3d |\n",
+                   dsBenhNhan[i].CCCD, dsBenhNhan[i].ten, dsBenhNhan[i].sdt,
                    dsBenhNhan[i].no, dsBenhNhan[i].soNgayKham);
             timThay++;
         }
     }
-    printf("+---------+----------------------+----------+--------+-----+\n");
+    printf("+-------------+----------------------+----------+--------+-----+\n");
     if (timThay == 0) {
         printf("Khong co ai ten \"%s\".\n", tuTim);
     } else {
@@ -510,7 +509,7 @@ void sapXepTheoNo() {
 
 void ghiNhanKhamBenh() {
     xoaManHinh();
-    char ma[10], ngayKham[20];
+    char CCCD[15], ngayKham[20];
     int hopLe = 0;
     if (soBenhNhan == 0) {
         printf("Khong co ai de ghi nhan.\n");
@@ -520,16 +519,16 @@ void ghiNhanKhamBenh() {
     printf("--- GHI NHAN KHAM BENH ---\n");
     do {
         hopLe = 1;
-        printf("Nhap ma benh nhan: ");
-        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
-        xoaXuongDong(ma);
-        if (strlen(ma) == 0 || timBenhNhanBangMa(ma) == -1) {
-            printf("Nhap lai ma nhe.\n");
+        printf("Nhap CCCD benh nhan: ");
+        if (fgets(CCCD, sizeof(CCCD), stdin) == NULL) return;
+        xoaXuongDong(CCCD);
+        if (strlen(CCCD) == 0 || timBenhNhanBangCCCD(CCCD) == -1) {
+            printf("Nhap lai CCCD nhe.\n");
             hopLe = 0;
         }
     } while (!hopLe);
 
-    int index = timBenhNhanBangMa(ma);
+    int index = timBenhNhanBangCCCD(CCCD);
 
     do {
         hopLe = 1;
@@ -560,7 +559,7 @@ void ghiNhanKhamBenh() {
 
     LichSu lsMoi;
     sprintf(lsMoi.maLichSu, "LS%lld", idLichSuToanCuc++);
-    strcpy(lsMoi.maBenhNhan, ma);
+    strcpy(lsMoi.CCCD, CCCD);
     strcpy(lsMoi.ngayKham, ngayKham);
     strcpy(lsMoi.trangThai, "Theo doi");
 
@@ -579,7 +578,7 @@ void ghiNhanKhamBenh() {
 
 void xemLichSuKhamBenh() {
     xoaManHinh();
-    char ma[10];
+    char CCCD[15];
     int hopLe = 0;
 
     if (soBenhNhan == 0) {
@@ -590,20 +589,20 @@ void xemLichSuKhamBenh() {
     printf("--- XEM LICH SU KHAM BENH ---\n");
     do {
         hopLe = 1;
-        printf("Nhap ma benh nhan: ");
-        if (fgets(ma, sizeof(ma), stdin) == NULL) return;
-        xoaXuongDong(ma);
-        if (strlen(ma) == 0 || timBenhNhanBangMa(ma) == -1) {
-            printf("Nhap lai ma nhe.\n");
+        printf("Nhap CCCD benh nhan: ");
+        if (fgets(CCCD, sizeof(CCCD), stdin) == NULL) return;
+        xoaXuongDong(CCCD);
+        if (strlen(CCCD) == 0 || timBenhNhanBangCCCD(CCCD) == -1) {
+            printf("Nhap lai CCCD nhe.\n");
             hopLe = 0;
         }
     } while (!hopLe);
 
-    int index = timBenhNhanBangMa(ma);
+    int index = timBenhNhanBangCCCD(CCCD);
 
     xoaManHinh();
     printf("\n+------------------------------------------------+\n");
-    printf("| Lich su kham cua %-20s (Ma: %s) |\n", dsBenhNhan[index].ten, ma);
+    printf("| Lich su kham cua %-20s (CCCD: %s) |\n", dsBenhNhan[index].ten, CCCD);
 
     if (dsBenhNhan[index].soLichSu == 0) {
         printf("| %-46s |\n", "Chua co lich su kham nao.");
@@ -627,61 +626,61 @@ void xemLichSuKhamBenh() {
 
 void khoiTaoDuLieu() {
     soBenhNhan = 7;
-    strcpy(dsBenhNhan[0].maBenhNhan, "001");
+    strcpy(dsBenhNhan[0].CCCD, "001234567890");
     strcpy(dsBenhNhan[0].ten, "Nguyen Van An");
     strcpy(dsBenhNhan[0].sdt, "123456789");
     dsBenhNhan[0].no = 8500000;
     dsBenhNhan[0].soNgayKham = 8;
     dsBenhNhan[0].soLichSu = 2;
     sprintf(dsBenhNhan[0].cacLichSu[0].maLichSu, "LS%lld", idLichSuToanCuc++);
-    strcpy(dsBenhNhan[0].cacLichSu[0].maBenhNhan, "001");
+    strcpy(dsBenhNhan[0].cacLichSu[0].CCCD, "001234567890");
     strcpy(dsBenhNhan[0].cacLichSu[0].ngayKham, "01/11/2025");
     strcpy(dsBenhNhan[0].cacLichSu[0].trangThai, "Tai kham");
     sprintf(dsBenhNhan[0].cacLichSu[1].maLichSu, "LS%lld", idLichSuToanCuc++);
-    strcpy(dsBenhNhan[0].cacLichSu[1].maBenhNhan, "001");
+    strcpy(dsBenhNhan[0].cacLichSu[1].CCCD, "001234567890");
     strcpy(dsBenhNhan[0].cacLichSu[1].ngayKham, "05/11/2025");
     strcpy(dsBenhNhan[0].cacLichSu[1].trangThai, "Theo doi");
 
-    strcpy(dsBenhNhan[1].maBenhNhan, "002");
+    strcpy(dsBenhNhan[1].CCCD, "001234567891");
     strcpy(dsBenhNhan[1].ten, "Tran Thi Binh");
     strcpy(dsBenhNhan[1].sdt, "987654321");
     dsBenhNhan[1].no = 300000;
     dsBenhNhan[1].soNgayKham = 2;
     dsBenhNhan[1].soLichSu = 1;
     sprintf(dsBenhNhan[1].cacLichSu[0].maLichSu, "LS%lld", idLichSuToanCuc++);
-    strcpy(dsBenhNhan[1].cacLichSu[0].maBenhNhan, "002");
+    strcpy(dsBenhNhan[1].cacLichSu[0].CCCD, "001234567891");
     strcpy(dsBenhNhan[1].cacLichSu[0].ngayKham, "10/11/2025");
     strcpy(dsBenhNhan[1].cacLichSu[0].trangThai, "Tai kham");
 
-    strcpy(dsBenhNhan[2].maBenhNhan, "003");
+    strcpy(dsBenhNhan[2].CCCD, "001234567892");
     strcpy(dsBenhNhan[2].ten, "Le Van Cuong");
     strcpy(dsBenhNhan[2].sdt, "147852369");
     dsBenhNhan[2].no = 2500000;
     dsBenhNhan[2].soNgayKham = 12;
     dsBenhNhan[2].soLichSu = 0;
 
-    strcpy(dsBenhNhan[3].maBenhNhan, "004");
+    strcpy(dsBenhNhan[3].CCCD, "001234567893");
     strcpy(dsBenhNhan[3].ten, "Nguyen Thi Dung");
     strcpy(dsBenhNhan[3].sdt, "333444555");
     dsBenhNhan[3].no = 100000;
     dsBenhNhan[3].soNgayKham = 1;
     dsBenhNhan[3].soLichSu = 0;
 
-    strcpy(dsBenhNhan[4].maBenhNhan, "005");
+    strcpy(dsBenhNhan[4].CCCD, "001234567894");
     strcpy(dsBenhNhan[4].ten, "Pham Van Hung");
     strcpy(dsBenhNhan[4].sdt, "912345678");
     dsBenhNhan[4].no = 1200000;
     dsBenhNhan[4].soNgayKham = 5;
     dsBenhNhan[4].soLichSu = 0;
 
-    strcpy(dsBenhNhan[5].maBenhNhan, "006");
+    strcpy(dsBenhNhan[5].CCCD, "001234567895");
     strcpy(dsBenhNhan[5].ten, "Hoang Van Khoa");
     strcpy(dsBenhNhan[5].sdt, "888777666");
     dsBenhNhan[5].no = 750000;
     dsBenhNhan[5].soNgayKham = 3;
     dsBenhNhan[5].soLichSu = 0;
 
-    strcpy(dsBenhNhan[6].maBenhNhan, "007");
+    strcpy(dsBenhNhan[6].CCCD, "001234567896");
     strcpy(dsBenhNhan[6].ten, "Vuong Thi Mai");
     strcpy(dsBenhNhan[6].sdt, "999888777");
     dsBenhNhan[6].no = 4000000;
